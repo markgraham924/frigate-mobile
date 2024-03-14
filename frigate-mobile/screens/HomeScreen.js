@@ -10,7 +10,8 @@ const HomeScreen = ({ navigation }) => {
         const response = await fetch("http://192.168.0.92:5000/api/stats");
         const data = await response.json();
         const names = Object.keys(data.cameras); 
-        setCameraNames(names);
+        const filteredNames = names.filter(name => name !== "ptz");
+        setCameraNames(filteredNames);
       } catch (error) {
         console.error("Failed to fetch camera data:", error);
       }
