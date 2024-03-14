@@ -1,25 +1,44 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  ScrollView,
   Image,
   Text,
   Button,
   StyleSheet,
   Dimensions,
+  FlatList,
+  RefreshControl,
 } from "react-native";
 
-const EventImageFetcher = ({ cameraID }) => {
+const EventImageFetcher = ({ cameraID, refreshTrigger, apiAttributes }) => {
   const [eventData, setEventData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Function to fetch event data
   const fetchEventData = async () => {
+    let queryParams = [];
+    queryParams.push(`camera=${cameraID}`);
+    queryParams.push("limit=50");
+    if (apiAttributes.Zone) {
+      queryParams.push("zones=driveway");
+    }
+    if (apiAttributes.Person && apiAttributes.Car) {
+      queryParams.push("labels=person,car");
+    } else {
+      if (apiAttributes.Person) {
+        queryParams.push("labels=person");
+      }
+      if (apiAttributes.Car) {
+        queryParams.push("labels=car");
+      }
+    }
+    const queryString =
+      queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+    setRefreshing(true);
     try {
       const response = await fetch(
-        `http://192.168.0.92:5000/api/events?limit=5&zones=driveway&camera=${cameraID}`
+        `http://192.168.0.92:5000/api/events${queryString}`
       );
       const data = await response.json();
-
       if (data.length > 0) {
         const processedData = data.map((event) => ({
           id: event.id,
@@ -29,7 +48,8 @@ const EventImageFetcher = ({ cameraID }) => {
             ? new Date(event.end_time * 1000).toLocaleString()
             : null,
           clip: event.has_clip,
-          imageUrl: `http://192.168.0.92:5000/api/events/${event.id}/thumbnail.jpg?format=android`,
+          //or can use thumbnail
+          imageUrl: `http://192.168.0.92:5000/api/events/${event.id}/snapshot.jpg?format=android`,
         }));
         setEventData(processedData);
       } else {
@@ -37,63 +57,59 @@ const EventImageFetcher = ({ cameraID }) => {
       }
     } catch (error) {
       console.error("Failed to fetch event data:", error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  // Effect hook to fetch data when the component mounts or the cameraID prop changes
   useEffect(() => {
     fetchEventData();
-  }, [cameraID]); // Dependency array includes cameraID to refetch when it changes
-
-  // Function to handle manual refresh
-  const handleRefresh = () => {
-    fetchEventData();
-  };
+  }, [cameraID, refreshTrigger, apiAttributes]);
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        {eventData.map((event) => (
+      <FlatList
+        data={eventData}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          //console.log(item),
           <View
-            key={event.id}
             style={[
               styles.card,
-              event.endtime === null ? styles.cardHighlight : null,
+              item.endtime === null ? styles.cardHighlight : null,
             ]}
           >
             <Image
-              source={{ uri: event.imageUrl }}
+              source={{ uri: item.imageUrl }}
               style={styles.image}
               resizeMode="cover"
             />
             <View style={styles.cardContent}>
-              <Text style={styles.cardText}>Label: {event.label}</Text>
-              <Text style={styles.cardText}>Start Time: {event.starttime}</Text>
-              {event.endtime && (
-                <Text style={styles.cardText}>End Time: {event.endtime}</Text>
+              <Text style={styles.cardText}>Label: {item.label}</Text>
+              <Text style={styles.cardText}>Start Time: {item.starttime}</Text>
+              {item.endtime && (
+                <Text style={styles.cardText}>End Time: {item.endtime}</Text>
               )}
               <Text style={styles.cardText}>
-                {event.clip ? "Clip Available" : "No Clip Available"}
+                {item.clip ? "Clip Available" : "No Clip Available"}
               </Text>
             </View>
           </View>
-        ))}
-      </ScrollView>
-      <View style={styles.buttonContainer}>
-        <Button title="Refresh Images" onPress={handleRefresh} />
-      </View>
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={fetchEventData} />
+        }
+        contentContainerStyle={styles.scrollView}
+      />
     </View>
   );
 };
 
 const windowWidth = Dimensions.get("window").width;
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    paddingBottom: 10,
   },
   scrollView: {
     alignItems: "center",
@@ -118,9 +134,6 @@ const styles = StyleSheet.create({
   },
   cardText: {
     marginBottom: 5,
-  },
-  buttonContainer: {
-    marginTop: 10,
   },
 });
 

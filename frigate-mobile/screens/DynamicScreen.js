@@ -1,20 +1,44 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import EventImageFetcher from '../components/doorbellPress';
+import React, { useLayoutEffect, useState } from 'react'; // Corrected import
+import { Text, View, Button, StyleSheet } from 'react-native';
+import EventImageFetcher from '../components/doorbellPress'; // Ensure the path is correct
+import FilterComponent from '../components/filterComponent'; // Assuming FilterComponent is in the same directory
 
-const DynamicScreen = ({ route }) => {
-  // Extracting the content parameter passed from the HomeScreen
+const DynamicScreen = ({ navigation, route }) => {
+  const [cameraID, setCameraID] = useState(route.params.content);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [apiAttributes, setApiAttributes] = useState({
+    Zone: false,
+    Person: false,
+    Car: false,
+  }); // New state for API attributes
+
+  const handleRefresh = () => setRefreshKey(prevKey => prevKey + 1);
+
+  const handleToggleChange = (toggles) => {
+    setApiAttributes(toggles);
+  };
+
+
   const { content } = route.params;
-  console.log(content);
-  return (
-    <View style={styles.container}>
-      
-      <EventImageFetcher cameraID={content} />
 
-    </View>
+  // Ensure useLayoutEffect is used if you need to set navigation options or perform effects based on navigation
+  useLayoutEffect(() => {
+    // Example: Set navigation options here if needed
+  }, [navigation]);
+
+  return (
+    <>
+      <View style={styles.container1}>
+        {/* Pass down the apiAttributes and the method to update them */}
+        <FilterComponent onRefresh={handleRefresh} apiAttributes={apiAttributes} onToggleChange={handleToggleChange} />
+      </View>
+      <View style={styles.container}>
+        {/* Pass down apiAttributes so EventImageFetcher can use them to modify the API call */}
+        <EventImageFetcher cameraID={cameraID} refreshTrigger={refreshKey} apiAttributes={apiAttributes} />
+      </View>
+    </>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -22,14 +46,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  text: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  container1: {
+    padding: 20,
+    backgroundColor: 'lightgrey',
   },
-  content: {
-    marginTop: 10,
-    fontSize: 16,
-  },
+  // Styles for 'text' and 'content' were removed as they were not used in this component
 });
 
 export default DynamicScreen;

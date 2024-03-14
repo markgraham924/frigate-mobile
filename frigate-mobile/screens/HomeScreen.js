@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import { View, Button, ScrollView, Text } from "react-native";
 
 const HomeScreen = ({ navigation }) => {
@@ -20,6 +20,7 @@ const HomeScreen = ({ navigation }) => {
   }, []);
 
   return (
+    
     <ScrollView
       contentContainerStyle={{
         flexGrow: 1,
