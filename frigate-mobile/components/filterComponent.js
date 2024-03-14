@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
   },
   button: {
     marginHorizontal: 10,
-    padding: 10,
-    borderRadius: 20,
+    padding: 5,
+    borderRadius: 10,
   },
 });
 
