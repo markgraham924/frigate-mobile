@@ -22,7 +22,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     
-    <ScrollView
+    <ScrollView 
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: "center",

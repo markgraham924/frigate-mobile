@@ -72,7 +72,7 @@ const EventImageFetcher = ({ cameraID, refreshTrigger, apiAttributes }) => {
         data={eventData}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          //console.log(item),
+          console.log(item),
           <View
             style={[
               styles.card,
